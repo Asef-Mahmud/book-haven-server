@@ -3,7 +3,7 @@ const cors = require('cors');
 require('dotenv').config()
 const app = express()
 const port = process.env.PORT || 3000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 
@@ -38,13 +38,79 @@ async function run(){
   try{
     await client.connect();
 
+    // COLLECTIONs
+    const db = client.db('book_haven_db')
+    const booksCollection = db.collection('books')
+
+
+
+    // BOOKS COLLECTION
+    
+    //Get 
+    // 1. GetALL
+    app.get('/books', async(req, res) => {
+
+      const cursor = booksCollection.find()
+      const result = await cursor.toArray()
+      res.send(result)
+    })
+
+    // 2. GetOne
+    app.get('/books/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await booksCollection.findOne(query)
+      res.send(result)
+    })
+
+
+
+    // Post
+    app.post('/books', async(req, res) => {
+        const newBook = req.body;
+        const result = await booksCollection.insertOne(newBook)
+        res.send(result)
+    })
+
+    // Patch
+    app.patch('/books/:id', async(req, res) => {
+      const id = req.params.id;
+      const updatedBook = req.body;
+      const query = {_id: new ObjectId(id)}
+
+      const update = {
+        $set: {
+          title: updatedBook.title,
+          author: updatedBook.author,
+          genre: updatedBook.genre,
+          rating: updatedBook.rating,
+          summary: updatedBook.summary,
+          coverImage: updatedBook.coverImage,
+        } 
+      }
+
+      const result = await booksCollection.updateOne(query, update)
+      res.send(result)
+    })
+
+    // Delete
+    app.delete('/books/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await booksCollection.deleteOne(query)
+      res.send(result)
+    })
+
+
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   }
 
   finally{
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
