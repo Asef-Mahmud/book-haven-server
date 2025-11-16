@@ -47,13 +47,37 @@ async function run(){
     // BOOKS COLLECTION
     
     //Get 
-    // 1. GetALL
+    // 1. GetALLBooks
     app.get('/books', async(req, res) => {
-
-      const cursor = booksCollection.find()
+      
+      const cursor = booksCollection.find().sort({rating: -1})
       const result = await cursor.toArray()
       res.send(result)
     })
+
+
+    //Get latest books
+    app.get('/books/latest-books', async (req, res) => {
+      const cursor = booksCollection.find().sort({created_at: -1}).limit(6)
+      const result = await cursor.toArray()
+      res.send(result)
+    })
+    
+
+    // Get My Books
+    app.get('/books', async(req, res) => {
+      const email = req.query.email
+      const query = {}
+      if(email){
+        query.userEmail = email
+      }
+
+      const cursor = booksCollection.find(query).sort({created_at: -1})
+      const result = await cursor.toArray()
+      res.send(result)
+    })
+
+
 
     // 2. GetOne
     app.get('/books/:id', async(req, res) => {
@@ -68,10 +92,12 @@ async function run(){
     // Post
     app.post('/books', async(req, res) => {
         const newBook = req.body;
+        newBook.created_at = new Date();
         const result = await booksCollection.insertOne(newBook)
         res.send(result)
     })
 
+    
     // Patch
     app.patch('/books/:id', async(req, res) => {
       const id = req.params.id;
@@ -86,6 +112,7 @@ async function run(){
           rating: updatedBook.rating,
           summary: updatedBook.summary,
           coverImage: updatedBook.coverImage,
+
         } 
       }
 
