@@ -48,7 +48,7 @@ async function run(){
     
     //Get 
     // 1. GetALLBooks
-    app.get('/books', async(req, res) => {
+    app.get('/all-books', async(req, res) => {
       
       const cursor = booksCollection.find().sort({rating: -1})
       const result = await cursor.toArray()
@@ -65,7 +65,7 @@ async function run(){
 
 
     // Get My Books
-    app.get('/books/my-books', async(req, res) => {
+    app.get('/my-books', async(req, res) => {
       const email = req.query.email
       const query = {}
       if(email){
@@ -80,7 +80,7 @@ async function run(){
 
 
     // 2. GetOne
-    app.get('/books/:id', async(req, res) => {
+    app.get('/book-details/:id', async(req, res) => {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
       const result = await booksCollection.findOne(query)
@@ -90,7 +90,7 @@ async function run(){
 
 
     // Post
-    app.post('/books', async(req, res) => {
+    app.post('/add-book', async(req, res) => {
         const newBook = req.body;
 
         // Verify the book hasn't been added before
@@ -106,7 +106,7 @@ async function run(){
 
     
     // Patch
-    app.patch('/books/:id', async(req, res) => {
+    app.patch('/update-book/:id', async(req, res) => {
       const id = req.params.id;
       const updatedBook = req.body;
       const query = {_id: new ObjectId(id)}
@@ -128,7 +128,7 @@ async function run(){
     })
 
     // Delete
-    app.delete('/books/:id', async(req, res) => {
+    app.delete('/delete-book/:id', async(req, res) => {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
       const result = await booksCollection.deleteOne(query)
