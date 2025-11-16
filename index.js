@@ -62,10 +62,10 @@ async function run(){
       const result = await cursor.toArray()
       res.send(result)
     })
-    
+
 
     // Get My Books
-    app.get('/books', async(req, res) => {
+    app.get('/books/my-books', async(req, res) => {
       const email = req.query.email
       const query = {}
       if(email){
@@ -92,6 +92,13 @@ async function run(){
     // Post
     app.post('/books', async(req, res) => {
         const newBook = req.body;
+
+        // Verify the book hasn't been added before
+        const verifyBook = await booksCollection.findOne({title: newBook.title, author: newBook.author})
+        if(verifyBook){
+          return res.status(400).send({message: "This book already exists! Try Another!"})
+        }
+
         newBook.created_at = new Date();
         const result = await booksCollection.insertOne(newBook)
         res.send(result)
