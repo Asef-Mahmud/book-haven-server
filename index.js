@@ -41,6 +41,7 @@ async function run(){
     // COLLECTIONs
     const db = client.db('book_haven_db')
     const booksCollection = db.collection('books')
+    const commentsCollection = db.collection('comments')
 
 
 
@@ -49,11 +50,13 @@ async function run(){
     //Get 
     // 1. GetALLBooks
     app.get('/all-books', async(req, res) => {
-      
-      const cursor = booksCollection.find().sort({rating: -1})
+      const order = req.query.order === 'asc' ? 1 : -1; 
+      const cursor = booksCollection.find().sort({ rating: order, created_at: -1 })
+
       const result = await cursor.toArray()
       res.send(result)
     })
+
 
 
     //Get latest books
@@ -133,6 +136,24 @@ async function run(){
       const query = {_id: new ObjectId(id)}
       const result = await booksCollection.deleteOne(query)
       res.send(result)
+    })
+
+
+
+    // Comments Collection
+
+    app.post('/comments', async(req, res) => {
+      const newComments = req.body;
+      newComments.created_at = new Date();
+
+      const result = await commentsCollection.insertOne(newComments)
+      res.send(result)
+    })
+
+
+
+    app.get('/comments', async(req, res) => {
+
     })
 
 
