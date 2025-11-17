@@ -143,8 +143,9 @@ async function run(){
     // Comments Collection
 
     app.post('/comments', async(req, res) => {
-      const newComments = req.body;
-      newComments.created_at = new Date();
+      const newComments = req.body
+      
+      newComments.timestamp = Date.now()
 
       const result = await commentsCollection.insertOne(newComments)
       res.send(result)
@@ -152,8 +153,13 @@ async function run(){
 
 
 
-    app.get('/comments', async(req, res) => {
+    app.get('/comments/:bookId', async(req, res) => {
+      const bookId = req.params.bookId;
+      const query = {bookId:bookId}
 
+      const cursor = commentsCollection.find(query).sort({timestamp: -1})
+      const result = await cursor.toArray()
+      res.send(result)
     })
 
 
