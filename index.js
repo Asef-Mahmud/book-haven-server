@@ -6,6 +6,14 @@ const port = process.env.PORT || 3000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
+const admin = require("firebase-admin");
+
+const serviceAccount = require("path/to/serviceAccountKey.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
 
 // --------------MIDDLEWARE ENDS HERE--------------
 
@@ -14,6 +22,16 @@ app.use(cors());
 app.use(express.json());
 
 
+// Firebase Token Verification
+
+const verifyFireBaseToken = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if(!authorization){
+    return res.status(401).send({message: 'Unauthorized Access'})
+  }
+
+
+}
 
 //---------------MIDDLEWARE ENDS HERE--------------
 
@@ -94,7 +112,8 @@ async function run(){
 
     // Post
     app.post('/add-book', async(req, res) => {
-        const newBook = req.body;
+      console.log('headersin the post', req.headers)  
+      const newBook = req.body;
 
         // Verify the book hasn't been added before
         const verifyBook = await booksCollection.findOne({title: newBook.title, author: newBook.author})
@@ -160,6 +179,11 @@ async function run(){
       const cursor = commentsCollection.find(query).sort({timestamp: -1})
       const result = await cursor.toArray()
       res.send(result)
+    })
+
+
+    app.delete('/delete-comment/:id', async(req, res) => {
+
     })
 
 
