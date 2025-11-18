@@ -8,7 +8,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const admin = require("firebase-admin");
 
-const serviceAccount = require("path/to/serviceAccountKey.json");
+const serviceAccount = require("./book-haven-4-all-firebase-adminsdk.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -24,9 +24,22 @@ app.use(express.json());
 
 // Firebase Token Verification
 
-const verifyFireBaseToken = (req, res, next) => {
+const verifyFireBaseToken = async(req, res, next) => {
   const authorization = req.headers.authorization;
   if(!authorization){
+    return res.status(401).send({message: 'Unauthorized Access'})
+  }
+
+  // If token exists -->  verification
+  const token = authorization.split(' ')[1];
+  try{
+    const decoded = await admin.auth().verifyIdToken(token);
+    console.log('inside firebaseToken', decoded)
+    req.token_email = decoded.email;
+    next();
+  }
+
+  catch(error){
     return res.status(401).send({message: 'Unauthorized Access'})
   }
 
@@ -86,11 +99,14 @@ async function run(){
 
 
     // Get My Books
-    app.get('/my-books', async(req, res) => {
+    app.get('/my-books', verifyFireBaseToken, async(req, res) => {
       const email = req.query.email
       const query = {}
       if(email){
         query.userEmail = email
+        if(email !== req.token_email){
+          return res.status(403).send({message: 'Forbidden Access'})
+        }
       }
 
       const cursor = booksCollection.find(query).sort({created_at: -1})
@@ -111,7 +127,7 @@ async function run(){
 
 
     // Post
-    app.post('/add-book', async(req, res) => {
+    app.post('/add-book', verifyFireBaseToken, async(req, res) => {
       console.log('headersin the post', req.headers)  
       const newBook = req.body;
 
@@ -128,7 +144,7 @@ async function run(){
 
     
     // Patch
-    app.patch('/update-book/:id', async(req, res) => {
+    app.patch('/update-book/:id', verifyFireBaseToken, async(req, res) => {
       const id = req.params.id;
       const updatedBook = req.body;
       const query = {_id: new ObjectId(id)}
@@ -150,7 +166,7 @@ async function run(){
     })
 
     // Delete
-    app.delete('/delete-book/:id', async(req, res) => {
+    app.delete('/delete-book/:id', verifyFireBaseToken, async(req, res) => {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
       const result = await booksCollection.deleteOne(query)
@@ -172,7 +188,7 @@ async function run(){
 
 
 
-    app.get('/comments/:bookId', async(req, res) => {
+    app.get('/comments/:bookId', verifyFireBaseToken, async(req, res) => {
       const bookId = req.params.bookId;
       const query = {bookId:bookId}
 
